@@ -1,4 +1,5 @@
 
+use bevy::window::PresentMode;
 use bevy::{prelude::*, window::WindowResolution};
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 
@@ -10,15 +11,14 @@ const NUM_BLOCKS:usize = 10;
 #[derive(Component)]
 struct CubeGrid(f32,f32,f32);
 
-#[derive(Component)]
-struct Cube;
-
 fn main() {
     
     let window = Window {
         resolution: WindowResolution::new(SCREEN_WIDTH, SCREEN_HEIGHT),
         resizable: false,
+        present_mode: PresentMode::Immediate,
         ..default()
+        
     };
 
     App::new()
@@ -57,7 +57,7 @@ fn spawn_camera_and_light(
     // ambient light
     commands.insert_resource(AmbientLight {
         color: Color::WHITE,
-        brightness: 1.0,
+        brightness: 5.0,
     });
     
 }
@@ -93,15 +93,14 @@ fn spawn_cubes(
                     transform: Transform::from_xyz(0.,0.,0.),
                     ..default()
                 },
-                CubeGrid(x as f32,y as f32,z as f32),
-                Cube));
+                CubeGrid(x as f32,y as f32,z as f32),));
             }
         }
     }    
 }
 
 fn move_cubes(
-    mut cube_query: Query<(&mut Transform, &CubeGrid), With<Cube>>,
+    mut cube_query: Query<(&mut Transform, &CubeGrid)>,
     time: Res<Time>,
 ) {
     let scale: f32 = (2. + time.elapsed_seconds().sin()) * 0.7;
@@ -122,7 +121,7 @@ fn move_cubes(
 }
 
 fn resize_cubes(
-    mut cube_query: Query<(&mut Transform, &CubeGrid), With<Cube>>,
+    mut cube_query: Query<(&mut Transform, &CubeGrid)>,
     time: Res<Time>,
 ) {
     let scale: f32 = (2. + time.elapsed_seconds().sin()) * 0.7;
@@ -139,7 +138,7 @@ fn resize_cubes(
 }
 
 fn color_cubes(
-    mut cube_query: Query<(&Handle<StandardMaterial>, &CubeGrid), With<Cube>>,
+    mut cube_query: Query<(&Handle<StandardMaterial>, &CubeGrid)>,
     mut materials: ResMut<Assets<StandardMaterial>>
 ) {
     for (cube_handle, cube_grid) in cube_query.iter_mut() {
