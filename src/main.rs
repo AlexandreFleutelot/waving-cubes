@@ -16,15 +16,13 @@ fn main() {
     let window = Window {
         resolution: WindowResolution::new(SCREEN_WIDTH, SCREEN_HEIGHT),
         resizable: false,
-        present_mode: PresentMode::Immediate,
+        present_mode: PresentMode::AutoNoVsync,
         ..default()
-        
     };
 
     App::new()
     .add_plugins(
         DefaultPlugins
-            .set(ImagePlugin::default_nearest()) // prevents blurry sprites
             .set(WindowPlugin {
                 primary_window: Some(window),
                 ..default()
@@ -39,7 +37,7 @@ fn main() {
     .add_system(move_camera)
     .add_system(move_cubes)
     .add_system(resize_cubes)
-    .add_system(color_cubes)
+    //.add_system(color_cubes)
     .run();
 }
 
@@ -50,7 +48,7 @@ fn spawn_camera_and_light(
     commands.spawn(Camera3dBundle {
         transform: Transform::from_xyz(30.0, 20.0, 30.0)
                             .looking_at(Vec3::ZERO, Vec3::Y),
-        projection: Projection::Perspective(PerspectiveProjection { fov: 0.7, ..default() }),     
+        projection: Projection::Perspective(PerspectiveProjection { fov: 0.7, ..default() }),   
         ..default()   
     });
 
@@ -89,7 +87,9 @@ fn spawn_cubes(
 
                 commands.spawn((MaterialMeshBundle {
                     mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
-                    material: materials.add(Color::WHITE.into()),
+                    material: materials.add(Color::hsl(((x + y + z) as f32 *18.) % 360.,
+                                                            0.77,
+                                                            0.5625).into()),
                     transform: Transform::from_xyz(0.,0.,0.),
                     ..default()
                 },
@@ -137,17 +137,16 @@ fn resize_cubes(
     }
 }
 
-fn color_cubes(
-    mut cube_query: Query<(&Handle<StandardMaterial>, &CubeGrid)>,
-    mut materials: ResMut<Assets<StandardMaterial>>
-) {
-    for (cube_handle, cube_grid) in cube_query.iter_mut() {
+// fn color_cubes(
+//     mut cube_query: Query<(&Handle<StandardMaterial>, &CubeGrid)>,
+//     mut materials: ResMut<Assets<StandardMaterial>>
+// ) {
+//     for (cube_handle, cube_grid) in cube_query.iter_mut() {
 
-        let (x,y,z) = (cube_grid.0,cube_grid.1,cube_grid.2);
+//         let (x,y,z) = (cube_grid.0,cube_grid.1,cube_grid.2);
         
-        let material = materials.get_mut(cube_handle).unwrap();
-        let cube_color = Color::hsl(((x + y + z)*18.) % 360.,0.77,0.5625);
-
-        material.base_color = cube_color;
-    }
-}
+//         if let Some(material) = materials.get_mut(cube_handle) {
+//             material.base_color = Color::hsl(((x + y + z)*18.) % 360.,0.77,0.5625);
+//         }
+//     }
+// }
