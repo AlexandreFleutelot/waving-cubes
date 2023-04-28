@@ -2,8 +2,6 @@
 use bevy::window::PresentMode;
 use bevy::{prelude::*, window::WindowResolution};
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
-use bevy::window::PresentMode;
-use bevy::{prelude::*, window::WindowResolution};
 
 const SCREEN_WIDTH: f32 = 800.;
 const SCREEN_HEIGHT: f32 = 450.;
@@ -42,7 +40,7 @@ fn main() {
     .add_system(move_camera)
     .add_system(move_cubes)
     .add_system(resize_cubes)
-    .add_system(color_cubes)
+    //.add_system(color_cubes)
     .run();
 }
 
@@ -83,7 +81,7 @@ fn spawn_cubes(
 
                 commands.spawn((MaterialMeshBundle {
                     mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
-                    material: materials.add(Color::WHITE.into()),
+                    material: materials.add(Color::hsl(((x + y + z) as f32 * 18.) % 360.,0.77,0.5625).into()),
                     transform: Transform::from_xyz(0.,0.,0.),
                     ..default()
                 },
@@ -131,17 +129,17 @@ fn resize_cubes(
     }
 }
 
-fn color_cubes(
-    mut cube_query: Query<(&Handle<StandardMaterial>, &CubeGrid), With<Cube>>,
-    mut materials: ResMut<Assets<StandardMaterial>>
-) {
-    for (cube_handle, cube_grid) in cube_query.iter_mut() {
+// fn color_cubes(
+//     mut cube_query: Query<(&Handle<StandardMaterial>, &CubeGrid), With<Cube>>,
+//     mut materials: ResMut<Assets<StandardMaterial>>
+// ) {
+//     for (cube_handle, cube_grid) in cube_query.iter_mut() {
 
-        let (x,y,z) = (cube_grid.0,cube_grid.1,cube_grid.2);
+//         let (x,y,z) = (cube_grid.0,cube_grid.1,cube_grid.2);
         
-        let material = materials.get_mut(cube_handle).unwrap();
-        let cube_color = Color::hsl(((x + y + z)*18.) % 360.,0.77,0.5625);
+//         let material = materials.get_mut(cube_handle).unwrap();
+//         let cube_color = Color::hsl(((x + y + z)*18.) % 360.,0.77,0.5625);
 
-        material.base_color = cube_color;
-    }
-}
+//         material.base_color = cube_color;
+//     }
+// }
