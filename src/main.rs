@@ -1,3 +1,6 @@
+
+use bevy::window::PresentMode;
+use bevy::{prelude::*, window::WindowResolution};
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::window::PresentMode;
 use bevy::{prelude::*, window::WindowResolution};
@@ -8,7 +11,10 @@ const SCREEN_HEIGHT: f32 = 450.;
 const NUM_BLOCKS: usize = 10;
 
 #[derive(Component)]
-struct CubeGrid(f32, f32, f32);
+struct CubeGrid(f32,f32,f32);
+
+#[derive(Component)]
+struct Cube;
 
 fn main() {
     let window = Window {
@@ -19,31 +25,34 @@ fn main() {
     };
 
     App::new()
-        .add_plugins(DefaultPlugins.set(WindowPlugin {
-            primary_window: Some(window),
-            ..default()
-        }))
-        .add_plugin(LogDiagnosticsPlugin::default())
-        .add_plugin(FrameTimeDiagnosticsPlugin::default())
-        .insert_resource(ClearColor(Color::rgb(1., 1., 1.)))
-        .add_startup_systems((spawn_camera_and_light, spawn_cubes))
-        .add_system(move_camera)
-        .add_system(move_cubes)
-        .add_system(resize_cubes)
-        //.add_system(color_cubes)
-        .run();
-        
+    .add_plugins(
+        DefaultPlugins
+            .set(ImagePlugin::default_nearest()) // prevents blurry sprites
+            .set(WindowPlugin {
+                primary_window: Some(window),
+                ..default()
+            }),
+    )
+    .add_plugin(LogDiagnosticsPlugin::default())
+    .add_plugin(FrameTimeDiagnosticsPlugin::default())
+    .insert_resource(ClearColor(Color::rgb(1.,1.,1.)))
+    .add_startup_systems((
+        spawn_camera_and_light,
+        spawn_cubes))
+    .add_system(move_camera)
+    .add_system(move_cubes)
+    .add_system(resize_cubes)
+    .add_system(color_cubes)
+    .run();
 }
 
 fn spawn_camera_and_light(mut commands: Commands) {
     // camera
     commands.spawn(Camera3dBundle {
-        transform: Transform::from_xyz(30.0, 20.0, 30.0).looking_at(Vec3::ZERO, Vec3::Y),
-        projection: Projection::Perspective(PerspectiveProjection {
-            fov: 0.7,
-            ..default()
-        }),
-        ..default()
+        transform: Transform::from_xyz(30.0, 20.0, 30.0)
+                            .looking_at(Vec3::ZERO, Vec3::Y),
+        projection: Projection::Perspective(PerspectiveProjection { fov: 0.7, ..default() }),     
+        ..default()   
     });
 
     // ambient light
@@ -71,23 +80,24 @@ fn spawn_cubes(
     for x in 0..NUM_BLOCKS {
         for y in 0..NUM_BLOCKS {
             for z in 0..NUM_BLOCKS {
-                commands.spawn((
-                    MaterialMeshBundle {
-                        mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
-                        material: materials.add(
-                            Color::hsl(((x + y + z) as f32 * 18.) % 360., 0.77, 0.5625).into(),
-                        ),
-                        transform: Transform::from_xyz(0., 0., 0.),
-                        ..default()
-                    },
-                    CubeGrid(x as f32, y as f32, z as f32),
-                ));
+
+                commands.spawn((MaterialMeshBundle {
+                    mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
+                    material: materials.add(Color::WHITE.into()),
+                    transform: Transform::from_xyz(0.,0.,0.),
+                    ..default()
+                },
+                CubeGrid(x as f32,y as f32,z as f32),
+                Cube));
             }
         }
     }
 }
 
-fn move_cubes(mut cube_query: Query<(&mut Transform, &CubeGrid)>, time: Res<Time>) {
+fn move_cubes(
+    mut cube_query: Query<(&mut Transform, &CubeGrid), With<Cube>>,
+    time: Res<Time>,
+) {
     let scale: f32 = (2. + time.elapsed_seconds().sin()) * 0.7;
 
     for (mut cube_tf, cube_grid) in cube_query.iter_mut() {
@@ -105,7 +115,10 @@ fn move_cubes(mut cube_query: Query<(&mut Transform, &CubeGrid)>, time: Res<Time
     }
 }
 
-fn resize_cubes(mut cube_query: Query<(&mut Transform, &CubeGrid)>, time: Res<Time>) {
+fn resize_cubes(
+    mut cube_query: Query<(&mut Transform, &CubeGrid), With<Cube>>,
+    time: Res<Time>,
+) {
     let scale: f32 = (2. + time.elapsed_seconds().sin()) * 0.7;
 
     for (mut cube_tf, cube_grid) in cube_query.iter_mut() {
@@ -118,16 +131,17 @@ fn resize_cubes(mut cube_query: Query<(&mut Transform, &CubeGrid)>, time: Res<Ti
     }
 }
 
-// fn color_cubes(
-//     mut cube_query: Query<(&Handle<StandardMaterial>, &CubeGrid)>,
-//     mut materials: ResMut<Assets<StandardMaterial>>
-// ) {
-//     for (cube_handle, cube_grid) in cube_query.iter_mut() {
+fn color_cubes(
+    mut cube_query: Query<(&Handle<StandardMaterial>, &CubeGrid), With<Cube>>,
+    mut materials: ResMut<Assets<StandardMaterial>>
+) {
+    for (cube_handle, cube_grid) in cube_query.iter_mut() {
 
-//         let (x,y,z) = (cube_grid.0,cube_grid.1,cube_grid.2);
-//         if let Some(material) = materials.get_mut(cube_handle) {
-//             material.base_color = Color::hsl(((x + y + z)*18.) % 360.,0.77,0.5625);
-//         }
-//     }
-// }
-//
+        let (x,y,z) = (cube_grid.0,cube_grid.1,cube_grid.2);
+        
+        let material = materials.get_mut(cube_handle).unwrap();
+        let cube_color = Color::hsl(((x + y + z)*18.) % 360.,0.77,0.5625);
+
+        material.base_color = cube_color;
+    }
+}
